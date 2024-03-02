@@ -1,5 +1,5 @@
 # Implementation of the RSA algorithm without using external libraries
-# to generate digital signature and verification.
+# to generate digital signature and verification
 
 import random
 
