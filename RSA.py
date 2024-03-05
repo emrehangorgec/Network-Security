@@ -1,10 +1,10 @@
 # Implementation of the RSA algorithm without using external libraries
 # to generate digital signature and verification
 
+import math
 import random
 
 
-# Custom implementations for is_prime, randint, and gcd
 def is_prime(number):
     if number < 2:
         return False
@@ -18,13 +18,6 @@ def randint(min_value, max_value):
     return random.randint(min_value, max_value)
 
 
-def gcd(a, b):
-    while b:
-        a, b = b, a % b
-    return a
-
-
-# Functions
 def generate_prime(min_value, max_value):
     prime = randint(min_value, max_value)
     while not is_prime(prime):
@@ -40,17 +33,18 @@ def mod_inverse(e, totient):
 
 
 def sign(message, d, n):
-    signature = pow(message, d, n)
+    signature = [pow(ch, d, n) for ch in message]
     return signature
 
 
 def verify(signature, e, n, message):
-    decrypted_signature = pow(signature, e, n)
-    return decrypted_signature == message
+    decrypted_signature = [pow(i, e, n) for i in signature]
+    decoded_message = "".join([chr(i) for i in decrypted_signature])
+    return decoded_message == message
 
 
 # Key Generation
-p, q = generate_prime(3, 39), generate_prime(3, 47)
+p, q = generate_prime(3, 5000), generate_prime(3, 5000)
 while p == q:
     q = generate_prime(3, 47)
 
@@ -59,7 +53,7 @@ totient = (p - 1) * (q - 1)
 
 e = randint(3, totient - 1)
 
-while gcd(e, totient) != 1:
+while math.gcd(e, totient) != 1:
     e = randint(3, totient - 1)
 
 d = mod_inverse(e, totient)
@@ -68,10 +62,13 @@ print(f"Public Key:{e}\nPrivate Key:{d}")
 print(f"n:{n}\nPhi of n:{totient}")
 print(f"p:{p}\nq:{q}")
 
+
 # Sign the message
-message = 42
-signature = sign(message, d, n)
-print(f"Signature: {signature}")
+message = "Hello"
+encoded_message = [ord(c) for c in message]
+signature = sign(encoded_message, d, n)
+# print(f"Message is {message}")
+# print(f"Signature is: {signature}")
 
 # Verification
 _signature = verify(signature, e, n, message)
