@@ -32,11 +32,14 @@ def mod_inverse(e, totient):
     return d
 
 
+# Encode the message to ASCII values, sign it by using private key.
 def sign(message, d, n):
-    signature = [pow(ch, d, n) for ch in message]
+    encoded_message = [ord(c) for c in message]
+    signature = [pow(ch, d, n) for ch in encoded_message]
     return signature
 
 
+# Decrypt the message by using public key, decode the decrypted message.
 def verify(signature, e, n, message):
     decrypted_signature = [pow(i, e, n) for i in signature]
     decoded_message = "".join([chr(i) for i in decrypted_signature])
@@ -57,19 +60,19 @@ while math.gcd(e, totient) != 1:
     e = randint(3, totient - 1)
 
 d = mod_inverse(e, totient)
-
-print(f"Public Key:{e}\nPrivate Key:{d}")
-print(f"n:{n}\nPhi of n:{totient}")
-print(f"p:{p}\nq:{q}")
+# End of Key Generation
 
 
-# Sign the message
-message = "Hello"
-encoded_message = [ord(c) for c in message]
-signature = sign(encoded_message, d, n)
-# print(f"Message is {message}")
-# print(f"Signature is: {signature}")
+print(f"Public Key:{e}\nPrivate Key:{d}\nn:{n}\nPhi of n:{totient}\np:{p}\nq:{q}\n\n")
 
-# Verification
+message = input("Enter the message: ")
+
+# Sign the message with private key.
+signature = sign(message, d, n)
+
+
+# Verify the digital signature with public key
 _signature = verify(signature, e, n, message)
-print(f"Result of Verification Process: {_signature}")
+
+print(f"\nResult of the Verification Process: {_signature}")
+print(f"\nMessage + Signature is: {message} { ' '.join(map(str, signature))}\n")
