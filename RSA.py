@@ -60,10 +60,10 @@ while math.gcd(e, totient) != 1:
     e = randint(3, totient - 1)
 
 d = mod_inverse(e, totient)
-# End of Key Generation
+# End of the Key Generation
 
 
-print(f"Public Key:{e}\nPrivate Key:{d}\nn:{n}\nPhi of n:{totient}\np:{p}\nq:{q}\n\n")
+print(f"\nPublic Key:{e}\nPrivate Key:{d}\nn:{n}\nPhi of n:{totient}\np:{p}\nq:{q}\n\n")
 
 message = input("Enter the message: ")
 
@@ -73,6 +73,8 @@ signature = sign(message, d, n)
 
 # Verify the digital signature with public key
 _signature = verify(signature, e, n, message)
+signed_message = message + " | " + " ".join(map(str, signature))
 
-print(f"\nResult of the Verification Process: {_signature}")
-print(f"\nMessage + Signature is: {message} { ' '.join(map(str, signature))}\n")
+print(f"Result of the Verification Process: {_signature}")
+print(f"Signed message is: {signed_message}\n")
+# print(f"\nMessage + Signature is: {message} { ' '.join(map(str, signature))}\n")
