@@ -1,5 +1,4 @@
-# Implementation of the RSA algorithm for digital signature
-# without using external libraries.
+# Implementation of the RSA and AES
 import math
 import random
 
