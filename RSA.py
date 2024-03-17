@@ -35,10 +35,10 @@ def mod_inverse(e, totient_n):
     return d
 
 
-# Encode the message to ASCII values, sign it by using private key.
 def sign(message, d, n):
-    encoded_message = [ord(c) for c in message]
-    signature = [pow(ch, d, n) for ch in encoded_message]
+    # encoded_message = [ord(c) for c in message]
+    message = bytes(message, "ascii")
+    signature = [pow(ch, d, n) for ch in message]
     return signature
 
 

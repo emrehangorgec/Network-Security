@@ -2,6 +2,8 @@
 import math
 import random
 
+import AES as aes
+
 
 # Function to check whether the given number is prime or not.
 def is_prime(number):
@@ -36,17 +38,20 @@ def mod_inverse(e, totient_n):
 
 # Encode the message to ASCII values, sign it by using private key.
 def sign(message, d, n):
-    encoded_message = [ord(c) for c in message]
-    signature = [pow(ch, d, n) for ch in encoded_message]
+    # encoded_message = [ord(c) for c in message]
+    message = bytes(message, "ascii")
+    signature = [pow(ch, d, n) for ch in message]
     return signature
 
 
 # Decrypt the message by using public key, decode the decrypted message.
 # Return the result of the verification process.
-def verify(signature, e, n, message):
+def verify(signature, e, n, decrypted_text):
     decrypted_signature = [pow(i, e, n) for i in signature]
     decoded_message = "".join([chr(i) for i in decrypted_signature])
-    return decoded_message == message
+    signed_message = decoded_message + " | " + " ".join(map(str, signature))
+    decrypted_text = decrypted_text.decode("utf-8")
+    return signed_message == decrypted_text
 
 
 # Key Generation for the RSA
@@ -71,15 +76,43 @@ print(
     f"\nPublic Key:{e}\nPrivate Key:{d}\nn:{n}\nPhi of n:{totient_n}\np:{p}\nq:{q}\n\n"
 )
 
-message = input("Enter the message: ")
+plaintext = input("Enter the plaintext: ")
 
-# Sign the message with the private key
-signature = sign(message, d, n)
+# Sign the plaintext with the private key
+signature = sign(plaintext, d, n)
+# Take the key as an input
+key_input = input("Enter the key (16 characters): ")
+
+# Convert the signature and key to byte arrays
+key = bytes(key_input, "utf-8")
+# Convert the signed message to bytes
+signed_message = plaintext + " | " + " ".join(map(str, signature))
+signed_message_bytes = bytes(signed_message, "utf-8")
+
+padded_signed_message = aes.pad_pkcs7(signed_message_bytes)
+
+
+# Check if the key length is valid
+if len(key) != 16:
+    print("Error: The key must be 16 characters long.")
+    exit()
+
+
+# Encrypt the plaintext
+encrypted = aes.aes_encrypt(list(padded_signed_message), list(key))
+print("Encrypted:", encrypted)
+
+# Decrypt the ciphertext
+decrypted = aes.aes_decrypt(encrypted, list(key))
+decrypted_text = bytes(aes.unpad_pkcs7(decrypted))
+
+# Convert the decrypted bytes back to a string
+print("Decrypted text:", decrypted_text.decode("utf-8"))
 
 
 # Verify the digital signature with the public key
-_signature = verify(signature, e, n, message)
-signed_message = message + " | " + " ".join(map(str, signature))
+_signature = verify(signature, e, n, decrypted_text)
+signed_message = plaintext + " | " + " ".join(map(str, signature))
 
 print(f"Result of the Verification Process: {_signature}")
 print(f"Signed message is: {signed_message}\n")
