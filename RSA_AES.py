@@ -80,16 +80,15 @@ plaintext = input("Enter the plaintext: ")
 
 # Sign the plaintext with the private key
 signature = sign(plaintext, d, n)
+signed_message = plaintext + " | " + " ".join(map(str, signature))
+
 # Take the key as an input
 key_input = input("Enter the key (16 characters): ")
 
-# Convert the signature and key to byte arrays
+# Encode the signed message and the key to byte arrays
 key = bytes(key_input, "utf-8")
-# Convert the signed message to bytes
-signed_message = plaintext + " | " + " ".join(map(str, signature))
 signed_message_bytes = bytes(signed_message, "utf-8")
-
-padded_signed_message = aes.pad_pkcs7(signed_message_bytes)
+extended_signed_message = aes.pad_pkcs7(signed_message_bytes)
 
 
 # Check if the key length is valid
@@ -98,22 +97,21 @@ if len(key) != 16:
     exit()
 
 
-# Encrypt the plaintext
-encrypted = aes.aes_encrypt(list(padded_signed_message), list(key))
-print("Encrypted:", encrypted)
+# Encrypt the signed message
+ciphertext = aes.aes_encrypt(list(extended_signed_message), list(key))
+print("\nCiphertext:", ciphertext)
 
 # Decrypt the ciphertext
-decrypted = aes.aes_decrypt(encrypted, list(key))
+decrypted = aes.aes_decrypt(ciphertext, list(key))
 decrypted_text = bytes(aes.unpad_pkcs7(decrypted))
 
-# Convert the decrypted bytes back to a string
-print("Decrypted text:", decrypted_text.decode("utf-8"))
+# Decode the decrypted bytes to a string
+print("\nDecrypted signed message is: ", decrypted_text.decode("utf-8"))
 
 
 # Verify the digital signature with the public key
-_signature = verify(signature, e, n, decrypted_text)
-signed_message = plaintext + " | " + " ".join(map(str, signature))
+is_verified = verify(signature, e, n, decrypted_text)
 
-print(f"Result of the Verification Process: {_signature}")
+print(f"Result of the Verification Process: {is_verified}")
 print(f"Signed message is: {signed_message}\n")
 # print(f"\nMessage + Signature is: {message} { ' '.join(map(str, signature))}\n")

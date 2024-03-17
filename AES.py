@@ -1,7 +1,4 @@
 # AES implementation
-import math
-import random
-
 # AES S-box
 s_box = (
     0x63,
@@ -594,6 +591,7 @@ def key_schedule_core(word, iteration):
     word[0] = word[0] ^ rcon[iteration]
     return word
 
+
 def multiply(x, y):
     """
     Multiply two numbers in the GF(2^8) finite field defined
@@ -606,9 +604,10 @@ def multiply(x, y):
         carry = x & 0x80
         x <<= 1
         if carry:
-            x ^= 0x1b
+            x ^= 0x1B
         y >>= 1
     return result & 0xFF
+
 
 # Key expansion function
 def expand_key(key, size, expanded_key_size):
@@ -797,14 +796,17 @@ def aes_decrypt(ciphertext, key):
 
     return [item for sublist in state for item in sublist]
 
+
 def pad_pkcs7(data):
     padding_len = 16 - (len(data) % 16)
     padding = bytes([padding_len] * padding_len)
     return data + padding
 
+
 def unpad_pkcs7(data):
     padding_len = data[-1]
     return data[:-padding_len]
+
 
 def main():
     # Take plaintext and key input from the user
@@ -812,8 +814,8 @@ def main():
     key_input = input("Enter the key (16 characters): ")
 
     # Convert the input strings to byte arrays
-    plaintext = bytes(plaintext_input, 'utf-8')
-    key = bytes(key_input, 'utf-8')
+    plaintext = bytes(plaintext_input, "utf-8")
+    key = bytes(key_input, "utf-8")
 
     # Check if the key length is valid
     if len(key) != 16:
@@ -832,10 +834,8 @@ def main():
     decrypted_text = bytes(unpad_pkcs7(decrypted))
 
     # Convert the decrypted bytes back to a string
-    print("Decrypted text:", decrypted_text.decode('utf-8'))
+    print("Decrypted text:", decrypted_text.decode("utf-8"))
+
 
 if __name__ == "__main__":
     main()
-
-
-
