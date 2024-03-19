@@ -116,7 +116,7 @@ signed_message = blocks_str + " | " + signed_blocks_str
 # Take the key as an input
 key_input = input("Enter the key (16 characters): ")
 
-# Encode the signed message and the key to byte arrays
+# Encode the signed message and the key to byte arrays.
 key = bytes(key_input, "utf-8")
 signed_message_bytes = bytes(signed_message, "utf-8")
 extended_signed_message = aes.pad_pkcs7(signed_message_bytes)
