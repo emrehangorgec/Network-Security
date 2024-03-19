@@ -45,14 +45,12 @@ def split_into_blocks(message, block_size):
 
 
 def encrypt_block(block, d, n):
-    # Encrypts a single block using RSA encryption: ciphertext = plaintext^e mod n.
     block_int = int.from_bytes(block.encode("utf-8"), byteorder="big")
     encrypted_block_int = pow(block_int, d, n)
     return encrypted_block_int
 
 
 def decrypt_block(encrypted_block_int, e, n):
-    # Decrypts a single block using RSA decryption: plaintext = ciphertext^d mod n.
     decrypted_block_int = pow(encrypted_block_int, e, n)
     decrypted_block_bytes = decrypted_block_int.to_bytes(
         (decrypted_block_int.bit_length() + 7) // 8, byteorder="big"
@@ -103,7 +101,6 @@ print(
     f"\nPublic Key:{e}\nPrivate Key:{d}\nn:{n}\nPhi of n:{totient_n}\np:{p}\nq:{q}\n\n"
 )
 
-# message = input("Enter the message: ")
 message = input("Enter the message: ")
 blocks, signed_blocks = sign(message, d, n)
 verification_result = verify(signed_blocks, e, n, message)
@@ -115,5 +112,5 @@ signed_message = blocks_str + " | " + signed_blocks_str
 
 print("\nSeperated message:", blocks)
 print("Signed blocks:", signed_blocks)
-print("\nSigned message:", signed_message)
-print("\nVerification result:", verification_result)
+print("Signed message:", signed_message)
+print("Verification result:", verification_result)
