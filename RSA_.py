@@ -1,8 +1,9 @@
-# Implementation of the RSA and AES
+# Implementation of the RSA algorithm for digital signature
+# without using external libraries.
 import math
 import random
 
-import AES as aes
+# --------Definiton of the functions to be used for Key Generation--------
 
 
 # Function to check whether the given number is prime or not.
@@ -76,12 +77,11 @@ def verify(signed_blocks, e, n, original_message):
         decrypt_block(signed_block, e, n) for signed_block in signed_blocks
     ]
     decrypted_message = "".join(decrypted_blocks)
-    signed_message = decrypted_message + " | " + " ".join(map(str, signed_blocks))
-    return signed_message == original_message
+    return decrypted_message == original_message
 
 
 # ---------------------------------------------------------------------------
-# Key Generation for the RSA
+# ------------------------Key Generation for the RSA------------------------
 p, q = generate_prime(3, 5000), generate_prime(3, 5000)
 while p == q:
     q = generate_prime(3, 47)
@@ -96,15 +96,14 @@ while math.gcd(e, totient_n) != 1:
     e = randint(3, totient_n - 1)
 
 d = mod_inverse(e, totient_n)
-# End of the Key Generation
+# --------End of the Key Generation--------
 
 
-# ---------------------------------------------------------------------------
-# ---------------------------------------------------------------------------
 print(
     f"\nPublic Key:{e}\nPrivate Key:{d}\nn:{n}\nPhi of n:{totient_n}\np:{p}\nq:{q}\n\n"
 )
 
+# message = input("Enter the message: ")
 message = input("Enter the message: ")
 blocks, signed_blocks = sign(message, d, n)
 verification_result = verify(signed_blocks, e, n, message)
@@ -113,32 +112,8 @@ blocks_str = "".join(blocks)
 signed_blocks_str = " ".join(map(str, signed_blocks))
 signed_message = blocks_str + " | " + signed_blocks_str
 
-# Take the key as an input
-key_input = input("Enter the key (16 characters): ")
 
-# Encode the signed message and the key to byte arrays
-key = bytes(key_input, "utf-8")
-signed_message_bytes = bytes(signed_message, "utf-8")
-extended_signed_message = aes.pad_pkcs7(signed_message_bytes)
-
-
-# Check if the key length is valid
-if len(key) != 16:
-    print("Error: The key must be 16 characters long.")
-    exit()
-
-
-# Encrypt the signed message
-ciphertext = aes.aes_encrypt(list(extended_signed_message), list(key))
-print("\nCiphertext:", ciphertext)
-
-# Decrypt the ciphertext
-decrypted = aes.aes_decrypt(ciphertext, list(key))
-decrypted_text = bytes(aes.unpad_pkcs7(decrypted))
-
-# Decode the decrypted bytes to a string
-print("\nDecrypted signed message is: ", decrypted_text.decode("utf-8"))
-
-
-print(f"Result of the Verification Process: {verification_result}")
-print(f"Signed message is: {signed_message}\n")
+print("\nSeperated message:", blocks)
+print("Signed blocks:", signed_blocks)
+print("\nSigned message:", signed_message)
+print("\nVerification result:", verification_result)
