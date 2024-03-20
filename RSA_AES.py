@@ -75,14 +75,25 @@ def sign(message, d, n):
         return blocks, signed_blocks
 
 
-def verify(signed_blocks, e, n, decrypted_message):
+# def verify(signed_blocks, e, n, decrypted_message):
+#     # Verify the signed message by decrypting each block with the public key and concatenating the results.
+#     decrypted_blocks = [
+#         decrypt_block(signed_block, e, n) for signed_block in signed_blocks
+#     ]
+#     _decrypted_message = "".join(decrypted_blocks)
+#     signed_message = _decrypted_message + " | " + " ".join(map(str, signed_blocks))
+#     return signed_message == decrypted_message, signed_message
+def verify(signed_message, e, n, decrypted_message):
+    # Split the message to decrypt the signature
+    message_part, signature_part = decrypted_message.rsplit(" | ", 1)
+    signed_blocks = [int(block) for block in signature_part.split()]
+
     # Verify the signed message by decrypting each block with the public key and concatenating the results.
-    decrypted_blocks = [
-        decrypt_block(signed_block, e, n) for signed_block in signed_blocks
-    ]
+    decrypted_blocks = [decrypt_block(block, e, n) for block in signed_blocks]
     _decrypted_message = "".join(decrypted_blocks)
-    signed_message = _decrypted_message + " | " + " ".join(map(str, signed_blocks))
-    return signed_message == decrypted_message, signed_message
+    verified_message = _decrypted_message + " | " + " ".join(map(str, signed_blocks))
+
+    return verified_message == signed_message, verified_message
 
 
 # ---------------------------
@@ -144,8 +155,8 @@ decrypted_text = bytes(aes.unpad_pkcs7(decrypted))
 
 
 # Verify the signature by using RSA (Decrypt each signed block one by one with public key)
-verification_result, _signed_message = verify(
-    signed_blocks, e, n, decrypted_text.decode("utf-8")
+verification_result, verified_message = verify(
+    signed_message, e, n, decrypted_text.decode("utf-8")
 )
 
 
@@ -154,7 +165,7 @@ print("Signed blocks:", signed_blocks)
 print("Signed message after RSA Encryption:", signed_message)
 print("\nSigned message after AES Encryption:", ciphertext)
 print("\nMessage after AES Decryption: ", decrypted_text.decode("utf-8"))
-print(f"Signed message after RSA decryption(verification): {_signed_message}")
+print(f"Signed message after RSA decryption(verification): {verified_message}")
 print(
     f"Result of the Verification Process after RSA Decryption : {verification_result}\n"
 )
