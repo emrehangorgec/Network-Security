@@ -1,5 +1,5 @@
 # AES implementation
-# AES S-box
+# AES S-box is used for substitution in encryption
 s_box = (
     0x63,
     0x7C,
@@ -259,7 +259,8 @@ s_box = (
     0x16,
 )
 
-# AES inverse S-box
+
+# AES inverse S-box is used for the reverse operation in decryption
 inv_s_box = (
     0x52,
     0x09,
@@ -520,15 +521,15 @@ inv_s_box = (
 )
 
 
-# Rijndael's key schedule rotate operation
+# Key schedule rotate operation, this function is used in the key expansion process
 def rotate(word):
     return word[1:] + word[:1]
 
 
-# Rijndael's key schedule core operation
+# Key schedule core operation
 def key_schedule_core(word, iteration):
 
-    # Rijndael's round constants
+    # Rijndael's round constants, provides an additional level of complexity in the key expansion.
     rcon = (
         0x01,
         0x02,
@@ -592,11 +593,9 @@ def key_schedule_core(word, iteration):
     return word
 
 
+# This function is used for mixing columns
 def multiply(x, y):
-    """
-    Multiply two numbers in the GF(2^8) finite field defined
-    by the polynomial x^8 + x^4 + x^3 + x + 1 = 0
-    """
+
     result = 0
     for i in range(8):
         if y & 1:
@@ -609,7 +608,8 @@ def multiply(x, y):
     return result & 0xFF
 
 
-# Key expansion function
+# Key expansion function generates the expanded key from the original key
+# Expanded key is used in each round of the AES
 def expand_key(key, size, expanded_key_size):
     # Set the iteration count
     current_size = 0
@@ -652,7 +652,7 @@ def inv_sub_bytes(state):
             state[i][j] = inv_s_box[state[i][j]]
 
 
-# ShiftRows step in AES
+# ShiftRows step in AES (First row is not shifted)
 def shift_rows(state):
     state[1][0], state[1][1], state[1][2], state[1][3] = (
         state[1][1],
@@ -696,7 +696,7 @@ def inv_shift_rows(state):
     )
 
 
-# MixColumns step in AES
+# Mixes the columns of the state matrşx. Providing diffusion in the cipher
 def mix_columns(state):
     for i in range(4):
         a = state[i][0]
@@ -732,15 +732,18 @@ def inv_mix_columns(state):
         )
 
 
-# AddRoundKey step in AES
+# XORing the state matrix with a round key derived from the expanded key
+# This step is the same for both encryption and decryption.
 def add_round_key(state, key):
     for i in range(4):
         for j in range(4):
             state[i][j] ^= key[i][j]
 
 
-# AES encryption function
-def aes_encrypt(plaintext, key):
+# AES encryption function includes:
+#   initial add_round_key step,
+#   9 rounds of sub_bytes, shift_rows, mix_columns, add_round_key
+def encrypt(plaintext, key):
     state = [list(plaintext[i : i + 4]) for i in range(0, len(plaintext), 4)]
 
     expanded_key = expand_key(key, len(key), 176)
@@ -768,8 +771,11 @@ def aes_encrypt(plaintext, key):
     return [item for sublist in state for item in sublist]
 
 
-# AES decryption function
-def aes_decrypt(ciphertext, key):
+# AES decryption function includes:
+#   initial add_round_key step,
+#   9 rounds of inv_shift_rows, inv_sub_bytes, add_round_key, inv_mix_columns
+#   final round includes: inv_shift_rows, inv_sub_bytes, add_round_key
+def decrypt(ciphertext, key):
     state = [list(ciphertext[i : i + 4]) for i in range(0, len(ciphertext), 4)]
 
     expanded_key = expand_key(key, len(key), 176)
@@ -797,12 +803,14 @@ def aes_decrypt(ciphertext, key):
     return [item for sublist in state for item in sublist]
 
 
+# Pads the plaintext to make its length a multiple of the AES block size which is 16 bytes (PKCS#7)
 def pad_pkcs7(data):
     padding_len = 16 - (len(data) % 16)
     padding = bytes([padding_len] * padding_len)
     return data + padding
 
 
+# Removes PKCS#7 padding from the decrypted plaintex to retrieve the original message
 def unpad_pkcs7(data):
     padding_len = data[-1]
     return data[:-padding_len]
@@ -826,11 +834,11 @@ def main():
     padded_plaintext = pad_pkcs7(plaintext)
 
     # Encrypt the plaintext
-    encrypted = aes_encrypt(list(padded_plaintext), list(key))
+    encrypted = encrypt(list(padded_plaintext), list(key))
     print("Encrypted:", encrypted)
 
     # Decrypt the ciphertext
-    decrypted = aes_decrypt(encrypted, list(key))
+    decrypted = decrypt(encrypted, list(key))
     decrypted_text = bytes(unpad_pkcs7(decrypted))
 
     # Convert the decrypted bytes back to a string

@@ -4,6 +4,10 @@ import random
 
 import AES as aes
 
+# -----------------------------------------------------------
+# Function definitions to be used for the RSA Key Generation |
+# -----------------------------------------------------------
+
 
 # Function to check whether the given number is prime or not.
 def is_prime(number):
@@ -36,8 +40,9 @@ def mod_inverse(e, totient_n):
     return d
 
 
-# ---------------------------------------------------------------------------
-# --------Definiton of the functions to be used for Digital Signature--------
+# ------------------------------------------------------------
+# Definiton of the functions to be used for Digital Signature |
+# ------------------------------------------------------------
 def split_into_blocks(message, block_size):
     # Splits the message into blocks of size 'block_size'.
     return [message[i : i + block_size] for i in range(0, len(message), block_size)]
@@ -63,7 +68,7 @@ def sign(message, d, n):
     # Sign the entire message by splitting it into blocks and signing each block with the private key.
     block_size = (n.bit_length() - 1) // 8
     if len(message) <= block_size:
-        return [encrypt_block(message, d, n)]
+        return [message], [encrypt_block(message, d, n)]
     else:
         blocks = split_into_blocks(message, block_size)
         signed_blocks = [encrypt_block(block, d, n) for block in blocks]
@@ -80,8 +85,9 @@ def verify(signed_blocks, e, n, decrypted_message):
     return signed_message == decrypted_message, signed_message
 
 
-# ---------------------------------------------------------------------------
-# ------------------------Key Generation for the RSA------------------------
+# ---------------------------
+# Key Generation for the RSA |
+# ---------------------------
 p, q = generate_prime(3, 5000), generate_prime(3, 5000)
 while p == q:
     q = generate_prime(3, 47)
@@ -97,7 +103,7 @@ while math.gcd(e, totient_n) != 1:
 
 d = mod_inverse(e, totient_n)
 # ------------------------End of the Key Generation------------------------
-# ---------------------------------------------------------------------------
+# -------------------------------------------------------------------------
 
 
 print(
@@ -105,34 +111,40 @@ print(
 )
 
 message = input("Enter the message: ")
+
+# Sign the message (each block is signed seperately)
 blocks, signed_blocks = sign(message, d, n)
-
+# Concatenate each block of the message
 blocks_str = "".join(blocks)
+# Concatenate each signed block
 signed_blocks_str = " ".join(map(str, signed_blocks))
-signed_message = blocks_str + " | " + signed_blocks_str
+signed_message = blocks_str + " | " + signed_blocks_str  # Message + signature
 
-# Take the key as an input
+# Take the key as an input to be used for the AES-128
 key_input = input("Enter the key (16 characters): ")
 
-# Encode the signed message and the key to byte arrays.
-key = bytes(key_input, "utf-8")
-# Check if the key length is valid
-if len(key) != 16:
+# Check if the key length is valid (AES-128 requires a 128 bit key)
+while len(key_input) != 16:
     print("Error: The key must be 16 characters long.")
-    exit()
+    key_input = input("Enter the key (16 characters): ")
+
+# Encode the key into byte arrays.
+key = bytes(key_input, "utf-8")
+
 signed_message_bytes = bytes(signed_message, "utf-8")
 extended_signed_message = aes.pad_pkcs7(signed_message_bytes)
 
 
-# Encrypt the signed message
-ciphertext = aes.aes_encrypt(list(extended_signed_message), list(key))
+# Encrypt the signed message with AES
+ciphertext = aes.encrypt(list(extended_signed_message), list(key))
 
-# Decrypt the ciphertext
-decrypted = aes.aes_decrypt(ciphertext, list(key))
+# Decrypt the ciphertext with AES
+decrypted = aes.decrypt(ciphertext, list(key))
 decrypted_text = bytes(aes.unpad_pkcs7(decrypted))
 
-# Decode the decrypted bytes to a string
-verification_result, signedMessage = verify(
+
+# Verify the signature by using RSA (Decrypt each signed block one by one with public key)
+verification_result, _signed_message = verify(
     signed_blocks, e, n, decrypted_text.decode("utf-8")
 )
 
@@ -142,7 +154,7 @@ print("Signed blocks:", signed_blocks)
 print("Signed message after RSA Encryption:", signed_message)
 print("\nSigned message after AES Encryption:", ciphertext)
 print("\nMessage after AES Decryption: ", decrypted_text.decode("utf-8"))
-print(f"Signed message after RSA decryption: {signedMessage}")
+print(f"Signed message after RSA decryption(verification): {_signed_message}")
 print(
     f"Result of the Verification Process after RSA Decryption : {verification_result}\n"
 )
