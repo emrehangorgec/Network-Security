@@ -73,7 +73,8 @@ while math.gcd(e, totient_n) != 1:
     e = randint(3, totient_n - 1)
 
 d = mod_inverse(e, totient_n)
-# --------End of the Key Generation--------
+# ------------------------End of the Key Generation------------------------
+# ---------------------------------------------------------------------------
 
 
 print(
