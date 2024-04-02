@@ -39,22 +39,43 @@ def mod_inverse(e, totient_n):
 
 # ---------------------------------------------------------------------------
 # --------Definiton of the functions to be used for Digital Signature--------
+def split_into_blocks(message, block_size):
+    # Splits the message into blocks of size 'block_size'.
+    return [message[i : i + block_size] for i in range(0, len(message), block_size)]
 
 
-# Encode the message to ASCII values, sign it by using private key.
+def encrypt_block(block, d, n):
+    block_int = int.from_bytes(block.encode("utf-8"), byteorder="big")
+    encrypted_block_int = pow(block_int, d, n)
+    return encrypted_block_int
+
+
+def decrypt_block(encrypted_block_int, e, n):
+    decrypted_block_int = pow(encrypted_block_int, e, n)
+    decrypted_block_bytes = decrypted_block_int.to_bytes(
+        (decrypted_block_int.bit_length() + 7) // 8, byteorder="big"
+    )
+    return decrypted_block_bytes.decode("utf-8")
+
+
 def sign(message, d, n):
-    # encoded_message = [ord(c) for c in message]
-    message = bytes(message, "ascii")
-    signature = [pow(ch, d, n) for ch in message]
-    return signature
+    # Sign the entire message by splitting it into blocks and signing each block with the private key.
+    block_size = (n.bit_length() - 1) // 8
+    if len(message) <= block_size:
+        return [encrypt_block(message, d, n)]
+    else:
+        blocks = split_into_blocks(message, block_size)
+        signed_blocks = [encrypt_block(block, d, n) for block in blocks]
+        return blocks, signed_blocks
 
 
-# Decrypt the message by using public key, decode the decrypted message.
-# Return the result of the verification process.
-def verify(signature, e, n, message):
-    decrypted_signature = [pow(i, e, n) for i in signature]
-    decoded_message = "".join([chr(i) for i in decrypted_signature])
-    return decoded_message == message
+def verify(signed_blocks, e, n, original_message):
+    # Verify the signed message by decrypting each block with the public key and concatenating the results.
+    decrypted_blocks = [
+        decrypt_block(signed_block, e, n) for signed_block in signed_blocks
+    ]
+    decrypted_message = "".join(decrypted_blocks)
+    return decrypted_message == original_message
 
 
 # ---------------------------------------------------------------------------
@@ -82,15 +103,15 @@ print(
 )
 
 message = input("Enter the message: ")
+blocks, signed_blocks = sign(message, d, n)
+verification_result = verify(signed_blocks, e, n, message)
 
-# Sign the message with the private key
-signature = sign(message, d, n)
+blocks_str = "".join(blocks)
+signed_blocks_str = " ".join(map(str, signed_blocks))
+signed_message = blocks_str + " | " + signed_blocks_str
 
 
-# Verify the digital signature with the public key
-_signature = verify(signature, e, n, message)
-signed_message = message + " | " + " ".join(map(str, signature))
-
-print(f"Result of the Verification Process: {_signature}")
-print(f"Signed message is: {signed_message}\n")
-# print(f"\nMessage + Signature is: {message} { ' '.join(map(str, signature))}\n")
+print("\nSeperated message:", blocks)
+print("Signed blocks:", signed_blocks)
+print("Signed message:", signed_message)
+print("Verification result:", verification_result)
